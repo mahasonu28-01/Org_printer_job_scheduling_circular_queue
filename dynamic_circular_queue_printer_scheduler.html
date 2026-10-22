@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Printer Job Scheduling | Circular Queue</title>
+<style>
+  :root{--bg:#0b1220;--panel:#121d30;--panel2:#17253b;--line:#293b55;--text:#eef4ff;--muted:#9eb0c9;--teal:#45e0c0;--blue:#79a8ff;--amber:#ffc76a;--red:#ff7f91;--green:#8be6a0;}
+  *{box-sizing:border-box} body{margin:0;background:radial-gradient(ellipse at 12% 0%,#17314a 0,transparent 38%),var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;line-height:1.5}
+  .wrap{max-width:1280px;margin:0 auto;padding:34px 22px 52px}.eyebrow{color:var(--teal);font-size:.76rem;font-weight:800;letter-spacing:.16em;text-transform:uppercase}.hero{display:flex;gap:24px;align-items:flex-end;justify-content:space-between;margin-bottom:26px}.hero h1{font-size:clamp(2rem,4vw,3.25rem);line-height:1.06;letter-spacing:-.045em;margin:9px 0 5px}.hero-subtitle{font-size:clamp(1.2rem,2vw,1.65rem);line-height:1.15;letter-spacing:-.025em;margin:0;color:var(--teal);font-weight:800}.hero p{max-width:670px;color:var(--muted);margin:0}.pill{border:1px solid #305b62;background:#123337;color:#a2f3e1;border-radius:99px;padding:8px 13px;white-space:nowrap;font-size:.82rem;font-weight:700}.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(300px,.75fr);gap:18px}.panel{background:linear-gradient(145deg,rgba(21,33,53,.97),rgba(15,25,41,.97));border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.16)}.panel-head{padding:19px 22px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;gap:12px}.panel-head h2{font-size:1.02rem;margin:0;letter-spacing:-.01em}.sub{font-size:.8rem;color:var(--muted)}.viz-content{padding:14px 20px 22px}.ring-board{height:520px;max-width:620px;margin:0 auto;position:relative}.ring-outline{position:absolute;width:420px;height:420px;border:1px dashed #38516b;border-radius:50%;left:50%;top:50%;transform:translate(-50%,-50%);box-shadow:0 0 38px #102a3b inset}.ring-outline:after{content:"";position:absolute;inset:11px;border:1px solid rgba(69,224,192,.11);border-radius:50%}.slot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;justify-content:center;border:1px solid #435871;background:#17273c;border-radius:15px;text-align:center;padding:4px;color:#d7e2f3;box-shadow:0 7px 18px rgba(0,0,0,.22);transition:background .2s,border-color .2s,transform .2s;z-index:2;overflow:visible}.slot .index{font-size:.62rem;color:#92a8c3;line-height:1.1;flex-shrink:0}.slot .value{font-size:.76rem;font-weight:800;max-width:100%;overflow:hidden;white-space:normal;overflow-wrap:anywhere;word-break:break-word;line-height:1.12;margin-top:3px;display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:3;text-overflow:clip}.slot.empty{background:#111d2d;color:#58708b;border-style:dashed}.slot.front{border:2px solid var(--teal);background:#123b3a;box-shadow:0 0 0 4px rgba(69,224,192,.09),0 8px 20px #071c22}.slot.rear{border:2px solid var(--amber);background:#3b3020;box-shadow:0 0 0 4px rgba(255,199,106,.08),0 8px 20px #25190a}.slot.front.rear{border-color:var(--teal);box-shadow:0 0 0 4px rgba(69,224,192,.09)}.pointer{position:absolute;top:-19px;font-size:.58rem;font-weight:900;letter-spacing:.05em;border-radius:5px;padding:2px 5px;color:#06151b;background:var(--teal);white-space:nowrap}.rear .pointer{top:auto;bottom:-19px;background:var(--amber);color:#241809}.front.rear .pointer{top:-19px;bottom:auto}.center-label{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:150px;text-align:center;z-index:1}.center-label .small{font-size:.7rem;color:var(--muted);letter-spacing:.14em;text-transform:uppercase}.center-label .big{font-size:2.3rem;font-weight:850;letter-spacing:-.06em;line-height:1.2}.center-label .cap{font-size:.8rem;color:var(--muted)}.legend{display:flex;gap:18px;justify-content:center;flex-wrap:wrap;font-size:.77rem;color:var(--muted);margin:2px 0 8px}.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px}.dot.f{background:var(--teal)}.dot.r{background:var(--amber)}.dot.e{background:#58708b}.formula{margin:16px auto 0;max-width:540px;border-radius:12px;background:#0b1726;border:1px solid #243952;padding:11px 14px;color:#b7c8df;font-size:.8rem;text-align:center}.formula code{color:#8cebd9;font-size:.86rem}
+  .job-list-panel{margin:16px 0 0;border:1px solid #293f5a;background:#0b1726;border-radius:12px;overflow:hidden}.job-list-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:12px 14px;border-bottom:1px solid #293f5a}.job-list-heading h3{margin:0;font-size:.8rem;color:#dbe8fa}.job-list-heading span{font-size:.72rem;color:var(--muted);text-align:right}.job-table-wrap{max-height:280px;overflow:auto}.job-table{border-collapse:collapse;width:100%;font-size:.8rem;text-align:left}.job-table th{position:sticky;top:0;background:#15253a;color:#93acc8;font-size:.69rem;text-transform:uppercase;letter-spacing:.06em;z-index:1}.job-table th,.job-table td{padding:9px 10px;border-bottom:1px solid #203149}.job-table td{color:#e8f0fc;overflow-wrap:anywhere}.job-table tr:last-child td{border-bottom:0}.job-table .empty-row{text-align:center;color:#8499b4;padding:18px}.role-tag{display:inline-block;border-radius:5px;padding:2px 6px;font-size:.64rem;font-weight:900;letter-spacing:.03em;white-space:nowrap}.role-tag.front{background:#123b3a;color:#80f4dc}.role-tag.rear{background:#3b3020;color:#ffd18a}.role-tag.both{background:#263c55;color:#cfddf0}
+  .controls{padding:20px 21px}.field-label{font-size:.79rem;font-weight:700;color:#cfdbeb;display:block;margin-bottom:8px}.entry{display:flex;gap:8px}.entry input{min-width:0;flex:1;background:#0b1726;border:1px solid #354a65;color:var(--text);border-radius:10px;padding:12px 13px;font:inherit;outline:none}.entry input:focus{border-color:var(--teal);box-shadow:0 0 0 3px #45e0c01a}.btn{border:1px solid transparent;border-radius:10px;padding:10px 12px;font:inherit;font-size:.85rem;font-weight:800;cursor:pointer;transition:filter .15s,transform .15s;white-space:nowrap}.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}.btn:active{transform:translateY(0)}.primary{background:var(--teal);color:#06201e}.process{background:#153a32;color:#baf5db;border-color:#2c6754}.secondary{background:#21344e;color:#e1ebf9;border-color:#354a65}.warn{background:#3a2d1d;color:#ffdc9e;border-color:#65502c}.danger{background:#3b202b;color:#ffabb8;border-color:#613541}.actions{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:17px}.actions .btn{width:100%;text-align:left;padding:12px}.actions .btn span{display:block;font-weight:500;font-size:.7rem;opacity:.72;margin-top:2px}.actions .wide{grid-column:1/-1}.divider{height:1px;background:var(--line);margin:19px 0}.status{border-radius:11px;padding:12px 13px;background:#102b2b;border:1px solid #27524d;color:#b5f6e6;font-size:.84rem;min-height:47px}.status.error{background:#321f29;border-color:#673543;color:#ffc0c8}.status.neutral{background:#152337;border-color:#334b67;color:#cad9ed}.process-summary{margin-top:12px;border:1px solid #2c6754;background:#0d2826;border-radius:11px;padding:11px 13px;display:flex;align-items:center;justify-content:space-between;gap:12px}.process-summary .summary-label{font-size:.78rem;color:#a8d8c9}.process-summary strong{font-size:1.05rem;color:#9cf0d8}.process-summary .last-processed{font-size:.74rem;color:#aac8bd;overflow-wrap:anywhere;max-width:65%;text-align:right}
+  .orderbox{margin-top:14px;border:1px solid #293f5a;background:#0b1726;border-radius:12px;padding:12px}.orderbox h3{font-size:.78rem;margin:0 0 8px;color:#a8bdd5;text-transform:uppercase;letter-spacing:.1em}.orderline{font-size:.85rem;color:#edf4ff;overflow-wrap:anywhere}.orderline .arrow{color:var(--teal);padding:0 6px}.orderline .none{color:#778ba5;font-style:italic}.log{margin-top:18px}.log-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px}.log h3{font-size:.84rem;margin:0}.log-list{display:flex;flex-direction:column;gap:7px;max-height:184px;overflow:auto}.log-item{display:flex;gap:10px;align-items:flex-start;font-size:.78rem;color:#b4c3d8}.log-item .time{font-variant-numeric:tabular-nums;color:#667f9d;min-width:42px}.log-item .msg{flex:1}.log-item strong{color:#e6efff}.notes{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px}.note{background:#111d2e;border:1px solid var(--line);border-radius:15px;padding:16px}.note .num{color:var(--teal);font-weight:900;font-size:.72rem;letter-spacing:.12em}.note h3{font-size:.92rem;margin:7px 0 6px}.note p{color:var(--muted);font-size:.8rem;margin:0}.footer{margin-top:19px;color:#7f93ad;font-size:.75rem;text-align:center}.footer strong{color:#aac1dc}
+
+  .algorithm-section{margin-top:22px;background:linear-gradient(145deg,rgba(21,33,53,.97),rgba(15,25,41,.97));border:1px solid var(--line);border-radius:20px;overflow:hidden;box-shadow:0 18px 50px rgba(0,0,0,.13)}
+  .algorithm-heading{padding:22px 24px 6px}.algorithm-eyebrow{color:var(--teal);font-size:.72rem;font-weight:850;letter-spacing:.16em;text-transform:uppercase}.algorithm-heading h2{font-size:clamp(1.35rem,2.5vw,1.8rem);margin:5px 0 7px;letter-spacing:-.025em}.algorithm-heading p{color:var(--muted);font-size:.88rem;margin:0;max-width:850px}
+  .algorithm-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;padding:18px 24px 24px}.algorithm-card{min-width:0;border:1px solid #2a3e59;background:#101d2f;border-radius:14px;padding:17px}.algorithm-card h3{font-size:1rem;margin:0 0 12px;color:#f0f5ff}.algorithm-card pre{margin:0;background:#0a1524;border:1px solid #243650;border-radius:10px;padding:14px;overflow-x:auto;white-space:pre-wrap;overflow-wrap:anywhere;color:#cbdaf0;font: .79rem/1.7 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}.algorithm-card code{color:#9cefe0}.algorithm-card .complexity{color:#8eead7;font-weight:750;font-size:.79rem;margin:12px 0 0}.algorithm-card .explain{font-size:.8rem;color:var(--muted);margin:10px 0 0}
+  @media(max-width:700px){.algorithm-grid{grid-template-columns:1fr;padding:15px}.algorithm-heading{padding:19px 15px 4px}}
+  @media(max-width:860px){.layout{grid-template-columns:1fr}.hero{align-items:flex-start;flex-direction:column}.ring-board{height:490px}.ring-outline{width:400px;height:400px}.notes{grid-template-columns:1fr}.pill{white-space:normal}}@media(max-width:480px){.wrap{padding:24px 12px 36px}.ring-board{height:365px}.ring-outline{width:270px;height:270px}.center-label{width:118px}.center-label .big{font-size:1.8rem}.viz-content{padding:8px 10px 16px}.controls{padding:16px}.actions{gap:7px}.btn{font-size:.78rem}.slot .index{font-size:.54rem}.slot .value{font-size:.62rem}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div><h1>Printer Job Scheduling</h1><h2 class="hero-subtitle">Circular Queue</h2></div>
+  </header>
+  <main class="layout">
+    <section class="panel">
+      <div class="panel-head"><div><h2>Queue visualizer</h2><div class="sub">Circular buffer slots · Front / Rear pointers</div></div><div class="sub" id="bufferStatus">4 slots allocated · expandable</div></div>
+      <div class="viz-content">
+        <div class="ring-board" id="ringBoard" aria-label="Circular queue visualization">
+          <div class="ring-outline"></div>
+          <div class="center-label"><div class="small">Jobs queued</div><div class="big" id="countCenter">0</div><div class="cap" id="capacityCenter">Slots allocated: 4</div></div>
+        </div>
+        <div class="legend"><span><i class="dot f"></i>Front (next to print)</span><span><i class="dot r"></i>Rear (last added)</span><span><i class="dot e"></i>Empty slot</span></div>
+        <div class="job-list-panel">
+          <div class="job-list-heading"><h3>All queued jobs · Front → Rear</h3><span id="jobListSummary">0 jobs · 4 slots allocated</span></div>
+          <div class="job-table-wrap" aria-label="All queued printer jobs"><table class="job-table"><thead><tr><th>FIFO #</th><th>Array index</th><th>Full job name</th><th>Pointer</th></tr></thead><tbody id="jobTableBody"><tr><td colspan="4" class="empty-row">Queue is empty.</td></tr></tbody></table></div>
+        </div>
+      </div>
+    </section>
+    <aside class="panel">
+      <div class="panel-head"><div><h2>Queue operations</h2><div class="sub">Choose an operation to run</div></div></div>
+      <div class="controls">
+        <label class="field-label" for="jobInput">New printer job</label>
+        <div class="entry"><input id="jobInput" maxlength="200" placeholder="e.g., Print report.pdf" autocomplete="off"/><button id="enqueueBtn" class="btn primary">Enqueue +</button></div>
+        <div class="actions">
+          <button class="btn secondary" id="dequeueBtn">Dequeue <span>Remove next job</span></button>
+          <button class="btn process" id="processBtn">Process Job <span>Print and remove Front job</span></button>
+          <button class="btn secondary" id="peekFrontBtn">Peek Front <span>See next job</span></button>
+          <button class="btn secondary" id="peekRearBtn">Peek Rear <span>See last job</span></button>
+          <button class="btn secondary" id="sizeBtn">Get Size <span>Count queued jobs</span></button>
+          <button class="btn secondary" id="emptyBtn">Is Empty? <span>Check queue state</span></button>
+          <button class="btn secondary" id="displayBtn">Display Queue <span>Show FIFO order</span></button>
+          <button class="btn warn wide" id="clearBtn">Clear Queue <span>Remove all queued jobs</span></button>
+        </div>
+        <div class="divider"></div>
+        <div id="status" class="status neutral" role="status" aria-live="polite">Ready. Add a printer job to begin.</div>
+        <div class="process-summary" aria-live="polite"><div><div class="summary-label">Jobs processed</div><strong id="processedCount">0</strong></div><div class="last-processed" id="lastProcessed">No jobs processed yet.</div></div>
+        <div class="orderbox"><h3>Logical FIFO order · Front → Rear</h3><div class="orderline" id="orderLine"><span class="none">Queue is empty.</span></div></div>
+        <div class="log"><div class="log-head"><h3>Operation history</h3><button class="btn secondary" id="clearLogBtn" style="padding:5px 8px;font-size:.7rem">Clear history</button></div><div id="logList" class="log-list"><div class="log-item"><span class="time">—</span><span class="msg">No operations yet.</span></div></div></div>
+      </div>
+    </aside>
+  </main>
+  <section class="algorithm-section" aria-labelledby="algorithm-title">
+    <div class="algorithm-heading">
+      <div class="algorithm-eyebrow">Algorithm</div>
+      <h2 id="algorithm-title">Circular Queue Operations</h2>
+      <p>The queue uses a dynamically resizing circular array. Front and Rear move around the array using modulo arithmetic; when all slots are occupied, storage expands automatically and jobs keep their FIFO order.</p>
+    </div>
+    <div class="algorithm-grid">
+      <article class="algorithm-card">
+        <h3>Enqueue(job)</h3>
+        <pre><code>if size == capacity:
+    resize to 2 × capacity
+    copy jobs in Front → Rear order
+    set Front = 0
+
+rearIndex = (Front + size) % capacity
+buffer[rearIndex] = job
+size = size + 1</code></pre>
+        <p class="complexity">Time: O(1) amortized · O(n) when resizing</p>
+        <p class="explain">Adds a new print job at the Rear. There is no fixed maximum job count because the buffer expands when full.</p>
+      </article>
+      <article class="algorithm-card">
+        <h3>Dequeue()</h3>
+        <pre><code>if size == 0:
+    report "Queue is empty"
+else:
+    job = buffer[Front]
+    clear buffer[Front]
+    size = size - 1
+
+    if size == 0:
+        Front = 0
+    else:
+        Front = (Front + 1) % capacity
+
+    return job</code></pre>
+        <p class="complexity">Time: O(1) amortized</p>
+        <p class="explain">Removes and returns the oldest waiting job. If the queue becomes sparse, the implementation may shrink its storage.</p>
+      </article>
+      <article class="algorithm-card">
+        <h3>Process Job()</h3>
+        <pre><code>if size == 0:
+    report "No job to process"
+else:
+    job = buffer[Front]
+    simulate printing job
+    remove job from Front
+    totalProcessed = totalProcessed + 1
+    return job</code></pre>
+        <p class="complexity">Time: O(1) amortized</p>
+        <p class="explain">Simulates printing the oldest waiting job, removes it from the circular queue, and updates the completed-job count. It does not send a document to a physical printer.</p>
+      </article>
+      <article class="algorithm-card">
+        <h3>Peek Front / Peek Rear</h3>
+        <pre><code>if size == 0:
+    report "Queue is empty"
+else:
+    frontJob = buffer[Front]
+    rearIndex = (Front + size - 1) % capacity
+    rearJob = buffer[rearIndex]
+    return requested job</code></pre>
+        <p class="complexity">Time: O(1)</p>
+        <p class="explain">Reads the next job to print or the most recently added job without removing either one.</p>
+      </article>
+      <article class="algorithm-card">
+        <h3>Circular Index and Other Operations</h3>
+        <pre><code>physicalIndex(offset) =
+    (Front + offset) % capacity
+
+Get Size: return size
+Is Empty: return (size == 0)
+Display Queue:
+    for offset = 0 to size - 1:
+        show buffer[physicalIndex(offset)]
+Clear Queue:
+    reset buffer, Front, and size</code></pre>
+        <p class="complexity">Index / Size / Is Empty: O(1) · Display: O(n)</p>
+        <p class="explain">Modulo arithmetic wraps an index to the beginning after the last slot, so vacated slots can be reused.</p>
+      </article>
+    </div>
+  </section>
+</div>
+<script>
+(() => {
+  'use strict';
+  class DynamicCircularQueue {
+    constructor(initialCapacity = 4) {
+      this.minCapacity = initialCapacity;
+      this.buffer = new Array(initialCapacity);
+      this.frontIndex = 0;
+      this.count = 0;
+    }
+    get capacity() { return this.buffer.length; }
+    get size() { return this.count; }
+    isEmpty() { return this.count === 0; }
+    physicalIndex(offset) { return (this.frontIndex + offset) % this.capacity; }
+    resize(newCapacity) {
+      const next = new Array(newCapacity);
+      for (let i = 0; i < this.count; i++) next[i] = this.buffer[this.physicalIndex(i)];
+      this.buffer = next;
+      this.frontIndex = 0;
+    }
+    enqueue(value) {
+      if (this.count === this.capacity) this.resize(this.capacity * 2);
+      const index = this.physicalIndex(this.count);
+      this.buffer[index] = value;
+      this.count++;
+      return { index, resized: this.count === this.capacity && this.capacity > this.minCapacity };
+    }
+    dequeue() {
+      if (this.isEmpty()) throw new Error('Cannot dequeue: the queue is empty.');
+      const value = this.buffer[this.frontIndex];
+      this.buffer[this.frontIndex] = undefined;
+      this.count--;
+      if (this.count === 0) this.frontIndex = 0;
+      else this.frontIndex = (this.frontIndex + 1) % this.capacity;
+      if (this.capacity > this.minCapacity && this.count <= Math.floor(this.capacity / 4)) {
+        this.resize(Math.max(this.minCapacity, Math.floor(this.capacity / 2)));
+      }
+      return value;
+    }
+    peekFront() {
+      if (this.isEmpty()) throw new Error('Cannot peek: the queue is empty.');
+      return this.buffer[this.frontIndex];
+    }
+    peekRear() {
+      if (this.isEmpty()) throw new Error('Cannot peek: the queue is empty.');
+      return this.buffer[this.physicalIndex(this.count - 1)];
+    }
+    toArray() { return Array.from({length: this.count}, (_, i) => this.buffer[this.physicalIndex(i)]); }
+    clear() { this.buffer = new Array(this.minCapacity); this.frontIndex = 0; this.count = 0; }
+  }
+
+  const queue = new DynamicCircularQueue(4);
+  const $ = id => document.getElementById(id);
+  const input = $('jobInput');
+  let defaultJobNumber = 1;
+  let totalProcessed = 0;
+  let history = [];
+
+  function setStatus(message, type = 'neutral') {
+    const el = $('status'); el.textContent = message; el.className = 'status ' + type;
+  }
+  function record(message) {
+    const time = new Date().toLocaleTimeString([], {hour:'2-digit', minute:'2-digit', second:'2-digit'});
+    history.unshift({time, message}); history = history.slice(0, 14); renderHistory();
+  }
+  function renderHistory() {
+    const box = $('logList'); box.replaceChildren();
+    if (!history.length) { const empty = document.createElement('div'); empty.className = 'log-item'; empty.textContent = 'No operations yet.'; box.appendChild(empty); return; }
+    history.forEach(item => {
+      const row = document.createElement('div'); row.className = 'log-item';
+      const time = document.createElement('span'); time.className = 'time'; time.textContent = item.time;
+      const msg = document.createElement('span'); msg.className = 'msg'; msg.textContent = item.message;
+      row.append(time, msg); box.appendChild(row);
+    });
+  }
+  function renderQueue() {
+    const board = $('ringBoard');
+    board.querySelectorAll('.slot').forEach(node => node.remove());
+    const cap = queue.capacity;
+    // Keep the visualization circular at every capacity; only slot size changes.
+    board.classList.remove('grid-mode');
+    const isMobile = window.matchMedia('(max-width: 480px)').matches;
+    const centerX = board.clientWidth / 2;
+    const centerY = board.clientHeight / 2;
+    // Keep the circular layout, with a larger ring and slot cards that can wrap job names onto multiple lines.
+    const sideMargin = isMobile ? 30 : 34;
+    const verticalMargin = isMobile ? 28 : 30;
+    const radius = Math.max(70, Math.min(centerX - sideMargin, centerY - verticalMargin, 214));
+    const spacingPerSlot = (2 * Math.PI * radius) / cap;
+    const maxSlotWidth = isMobile ? 104 : 132;
+    const slotWidth = Math.max(34, Math.min(maxSlotWidth, spacingPerSlot * 0.72));
+    const slotHeight = Math.max(40, Math.min(isMobile ? 68 : 78, slotWidth * 0.82));
+    const rearIndex = queue.isEmpty() ? -1 : queue.physicalIndex(queue.size - 1);
+    for (let i = 0; i < cap; i++) {
+      const angle = (-Math.PI / 2) + (2 * Math.PI * i / cap);
+      const node = document.createElement('div');
+      const isFront = !queue.isEmpty() && i === queue.frontIndex;
+      const isRear = !queue.isEmpty() && i === rearIndex;
+      const value = queue.buffer[i];
+      node.className = 'slot' + (value === undefined ? ' empty' : '') + (isFront ? ' front' : '') + (isRear ? ' rear' : '');
+      node.style.left = `${centerX + radius * Math.cos(angle)}px`;
+      node.style.top = `${centerY + radius * Math.sin(angle)}px`;
+      node.style.width = `${slotWidth}px`; node.style.height = `${slotHeight}px`;
+      if (slotWidth < 54) node.style.borderRadius = '12px';
+      node.title = `Index ${i}: ${value === undefined ? 'empty' : value}`;
+      const idx = document.createElement('span'); idx.className = 'index'; idx.textContent = `[${i}]`;
+      const val = document.createElement('span'); val.className = 'value'; val.textContent = value === undefined ? '—' : value; val.style.maxWidth = `${Math.max(20, slotWidth - 12)}px`;
+      if (slotWidth < 72) { idx.style.fontSize = '0.52rem'; val.style.fontSize = '0.60rem'; }
+      if (slotWidth < 43) { idx.style.fontSize = '0.46rem'; val.style.fontSize = '0.52rem'; }
+      node.append(idx, val);
+      if (isFront) { const tag = document.createElement('span'); tag.className = 'pointer'; tag.textContent = 'FRONT'; node.appendChild(tag); }
+      if (isRear && !isFront) { const tag = document.createElement('span'); tag.className = 'pointer'; tag.textContent = 'REAR'; node.appendChild(tag); }
+      else if (isRear && isFront) { const tag = document.createElement('span'); tag.className = 'pointer'; tag.textContent = 'REAR'; node.appendChild(tag); }
+      board.appendChild(node);
+    }
+    $('countCenter').textContent = queue.size;
+    $('capacityCenter').textContent = `Slots allocated: ${queue.capacity}`;
+    $('bufferStatus').textContent = `${queue.capacity} slots · expandable`;
+    const order = queue.toArray();
+    $('jobListSummary').textContent = `${queue.size} job${queue.size === 1 ? '' : 's'} · ${queue.capacity} slots allocated`;
+    const tableBody = $('jobTableBody'); tableBody.replaceChildren();
+    if (!order.length) { const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 4; td.className = 'empty-row'; td.textContent = 'Queue is empty.'; tr.appendChild(td); tableBody.appendChild(tr); }
+    else order.forEach((job, i) => {
+      const tr = document.createElement('tr');
+      const fifo = document.createElement('td'); fifo.textContent = String(i + 1);
+      const index = document.createElement('td'); index.textContent = String(queue.physicalIndex(i));
+      const name = document.createElement('td'); name.textContent = job; name.title = job;
+      const pointer = document.createElement('td');
+      const role = queue.size === 1 ? 'FRONT + REAR' : i === 0 ? 'FRONT' : i === queue.size - 1 ? 'REAR' : '—';
+      if (role === '—') pointer.textContent = role;
+      else { const tag = document.createElement('span'); tag.className = 'role-tag ' + (role === 'FRONT + REAR' ? 'both' : role.toLowerCase()); tag.textContent = role; pointer.appendChild(tag); }
+      tr.append(fifo, index, name, pointer); tableBody.appendChild(tr);
+    });
+    const line = $('orderLine'); line.replaceChildren();
+    if (!order.length) { const none = document.createElement('span'); none.className = 'none'; none.textContent = 'Queue is empty.'; line.appendChild(none); }
+    else order.forEach((job, i) => {
+      if (i) { const arrow = document.createElement('span'); arrow.className = 'arrow'; arrow.textContent = '→'; line.appendChild(arrow); }
+      const text = document.createElement('span'); text.textContent = job; line.appendChild(text);
+    });
+  }
+  function enqueue() {
+    let job = input.value.trim();
+    if (!job) job = `Print Job ${defaultJobNumber++}`;
+    const before = queue.capacity;
+    queue.enqueue(job);
+    const grew = queue.capacity > before;
+    setStatus(grew ? `Enqueued “${job}”. Buffer expanded automatically from ${before} to ${queue.capacity} slots.` : `Enqueued “${job}” at the Rear.`, '');
+    record(`Enqueue: “${job}”${grew ? ` · capacity ${before} → ${queue.capacity}` : ''}`);
+    input.value = ''; input.focus(); renderQueue();
+  }
+  function dequeue() {
+    if (queue.isEmpty()) { setStatus('Cannot dequeue: the queue is empty.', 'error'); record('Dequeue failed: queue is empty.'); return; }
+    const before = queue.capacity; const job = queue.dequeue(); const shrunk = queue.capacity < before;
+    setStatus(`Dequeued “${job}”. This was the oldest job at the Front${shrunk ? `; buffer reduced to ${queue.capacity} slots` : ''}.`, '');
+    record(`Dequeue: removed “${job}”${shrunk ? ` · capacity ${before} → ${queue.capacity}` : ''}`); renderQueue();
+  }
+  function processJob() {
+    if (queue.isEmpty()) {
+      setStatus('Cannot process a job: the queue is empty.', 'error');
+      record('Process Job failed: queue is empty.');
+      return;
+    }
+    const before = queue.capacity;
+    const job = queue.dequeue();
+    const shrunk = queue.capacity < before;
+    totalProcessed++;
+    $('processedCount').textContent = String(totalProcessed);
+    $('lastProcessed').textContent = `Last processed: “${job}”`;
+    setStatus(`Processed “${job}”. The simulated print job was removed from the Front${shrunk ? `; buffer reduced to ${queue.capacity} slots` : ''}.`, '');
+    record(`Process Job: printed “${job}”${shrunk ? ` · capacity ${before} → ${queue.capacity}` : ''}`);
+    renderQueue();
+  }
+  function peek(which) {
+    try { const job = which === 'front' ? queue.peekFront() : queue.peekRear(); setStatus(`Peek ${which === 'front' ? 'Front' : 'Rear'}: “${job}”. No job was removed.`, ''); record(`Peek ${which}: “${job}”`); }
+    catch (e) { setStatus(e.message, 'error'); record(`Peek ${which} failed: queue is empty.`); }
+  }
+  $('enqueueBtn').addEventListener('click', enqueue);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') enqueue(); });
+  $('dequeueBtn').addEventListener('click', dequeue);
+  $('processBtn').addEventListener('click', processJob);
+  $('peekFrontBtn').addEventListener('click', () => peek('front'));
+  $('peekRearBtn').addEventListener('click', () => peek('rear'));
+  $('sizeBtn').addEventListener('click', () => { setStatus(`Queue size: ${queue.size} job(s). Allocated capacity: ${queue.capacity} slot(s).`, ''); record(`Get Size: ${queue.size}`); });
+  $('emptyBtn').addEventListener('click', () => { const empty = queue.isEmpty(); setStatus(empty ? 'Is Empty? Yes — there are no jobs waiting.' : `Is Empty? No — ${queue.size} job(s) are waiting.`, ''); record(`Is Empty: ${empty ? 'true' : 'false'}`); });
+  $('displayBtn').addEventListener('click', () => { const jobs = queue.toArray(); setStatus(jobs.length ? `FIFO order (Front → Rear): ${jobs.join(' → ')}` : 'Queue is empty.', jobs.length ? '' : 'neutral'); record(`Display Queue: ${jobs.length ? jobs.join(' → ') : 'empty'}`); });
+  $('clearBtn').addEventListener('click', () => { const previous = queue.size; queue.clear(); setStatus(`Queue cleared. Removed ${previous} job(s); buffer reset to ${queue.capacity} slots.`, ''); record(`Clear Queue: removed ${previous} job(s)`); renderQueue(); });
+  $('clearLogBtn').addEventListener('click', () => { history = []; renderHistory(); setStatus('Operation history cleared.', 'neutral'); });
+  window.addEventListener('resize', renderQueue);
+  renderQueue();
+})();
+</script>
+</body>
+</html>
